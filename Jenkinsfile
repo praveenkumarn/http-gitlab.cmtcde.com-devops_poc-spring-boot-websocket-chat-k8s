@@ -48,7 +48,7 @@ else
 fi
 '''
 
-// Docker Image build step
+// Docker Image build and deploy step
 sh """ 
 #!/bin/bash
 pwd
@@ -66,6 +66,15 @@ docker tag spring-boot-websocket-chat-demo praveenkumarnagarajan/spring-boot-web
 cat ~/pass.txt | docker login --username praveenkumarnagarajan --password-stdin
 
 docker push praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT 
+docker pull praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT
+
+docker image ls
+kubectl run kubernetes-springboot --image=praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT --port=8080
+kubectl expose deployment/kubernetes-springboot --type="NodePort" --port 8080
+
+kubectl get nodes
+kubectl get services
+kubectl describe services/kubernetes-springboot
  """
   cleanWs()
 		// Checkstyle report
@@ -80,28 +89,6 @@ docker push praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT
     }
   }
  }  
- 
- 
-// K8s Deploy step
 
-sh """ 
-
-#!/bin/bash
-pwd
-id
-ls -lrt
-java -version
-
-docker pull praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT
-
-docker image ls
-kubectl run kubernetes-springboot --image=praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT --port=8080
-kubectl expose deployment/kubernetes-springboot --type="NodePort" --port 8080
-
-kubectl get nodes
-kubectl get services
-kubectl describe services/kubernetes-springboot
-
-""" 
 
 }
