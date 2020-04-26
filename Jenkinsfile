@@ -11,10 +11,10 @@ timestamps {
 
 node ('Kubernetes') {
 
-	stage ('KGL_Complete_CI - Checkout') {
+	stage ('K8sGL_CICD- Checkout') {
  	 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '00a9b575-7866-4f8b-9995-6ea0281fa5b8', url: 'http://gitlab.cmtcde.com/root/spring-boot-websocket-chat-Kube.git']]]) 
 	}
-	stage ('KGL_Complete_CI - Build') {
+	stage ('K8sGL_CICD - Build') {
  	
 	withMaven(maven: 'M2_HOME') { 
  			if(isUnix()) {
@@ -35,8 +35,20 @@ node ('Kubernetes') {
     }
   }
 
-  
- // Docker Image build step
+// Shell Pre-build step
+ 		
+sh label: '', script: '''
+process_count=`kubectl get services | grep kubernetes-springboot | grep -v grep | wc -l`
+if [ "${process_count}" -eq "0" ] ; then
+     echo "kubernetes-springboot not running.No action required"
+else
+     echo "kubernetes-springboot services running, so delete the services and deployment"
+    	kubectl delete services kubernetes-springboot
+        kubectl delete -n default deployment kubernetes-springboot
+fi
+'''
+
+// Docker Image build step
 sh """ 
 #!/bin/bash
 pwd
