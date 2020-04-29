@@ -12,7 +12,7 @@ timestamps {
 node ('Kubernetes') {
 
 	stage ('K8sGL_CICD- Checkout') {
- 	 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '00a9b575-7866-4f8b-9995-6ea0281fa5b8', url: 'http://gitlab.cmtcde.com/devops_poc/spring-boot-websocket-chat-k8s.git']]]) 
+ 	 checkout([$class: 'GitSCM', branches: [[name: '*/develop']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '00a9b575-7866-4f8b-9995-6ea0281fa5b8', url: 'http://gitlab.cmtcde.com/devops_poc/spring-boot-websocket-chat-k8s.git']]]) 
 	}
 	stage ('K8sGL_CICD - Build') {
  	
@@ -93,6 +93,3 @@ kubectl describe services/kubernetes-springboot
   }
  }  
 }
-
-   cleanWs()
-
