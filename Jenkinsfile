@@ -32,7 +32,7 @@ cleanWs()
      def scannerHome = tool 'SonarScanner';
      withSonarQubeEnv('SonarQube') { 
       sh "${scannerHome}/bin/sonar-scanner"
-      sh "sleep 120"
+      sh "sleep 60"
     }
   }
 
