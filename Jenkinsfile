@@ -44,6 +44,9 @@ cleanWs()
     }
   }
  }  
+ 
+ 	// Checkstyle report
+		step([$class: 'CheckStylePublisher', canComputeNew: false, defaultEncoding: '', healthy: '90', pattern: '**/checkstyle-result.xml. ', unHealthy: '40']) 
 
 // Shell Pre-build step
  		
@@ -59,7 +62,7 @@ fi
 '''
 
 
-// Docker Image build and deploy step
+// Docker Image build and K8s deploy step
 sh """ 
 #!/bin/bash
 pwd
@@ -88,8 +91,7 @@ kubectl get services
 kubectl describe services/kubernetes-springboot
  """
   
-		// Checkstyle report
-		step([$class: 'CheckStylePublisher', canComputeNew: false, defaultEncoding: '', healthy: '90', pattern: '**/checkstyle-result.xml. ', unHealthy: '40']) 
+	
 	}
 }
     
