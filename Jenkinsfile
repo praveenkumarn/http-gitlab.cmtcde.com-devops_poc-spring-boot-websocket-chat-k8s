@@ -2,7 +2,7 @@
  
 /**
         * Sample Jenkinsfile for SpringBoot-Chat Application Pipeline
-        * from https://github.com/praveenkumarn/spring-boot-websocket-chat-Kube/edit/master/Jenkinsfile
+        * from https://github.com/praveenkumarn/spring-boot-websocket-chat-k8s/edit/master/Jenkinsfile
         * by Praveen
  */
 
@@ -10,9 +10,9 @@
 timestamps {
 
 node ('Kubernetes') {
-
+cleanWs()
 	stage ('K8sGL_CICD- Checkout') {
- 	 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '00a9b575-7866-4f8b-9995-6ea0281fa5b8', url: 'http://gitlab.cmtcde.com/root/spring-boot-websocket-chat-Kube.git']]]) 
+ 	 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '00a9b575-7866-4f8b-9995-6ea0281fa5b8', url: 'http://gitlab.cmtcde.com/devops_poc/spring-boot-websocket-chat-k8s.git']]]) 
 	}
 	stage ('K8sGL_CICD - Build') {
  	
@@ -32,8 +32,21 @@ node ('Kubernetes') {
      def scannerHome = tool 'SonarScanner';
      withSonarQubeEnv('SonarQube') { 
       sh "${scannerHome}/bin/sonar-scanner"
+      sh "sleep 60"
     }
   }
+
+ stage("Quality Gate"){
+    timeout(time: 2, unit: 'MINUTES') { // Just in case something goes wrong, pipeline will be killed after a timeout
+    def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
+    if (qg.status != 'OK') {
+        error "Pipeline aborted due to quality gate failure: ${qg.status}"
+    }
+  }
+ }  
+ 
+ 	// Checkstyle report
+		step([$class: 'CheckStylePublisher', canComputeNew: false, defaultEncoding: '', healthy: '90', pattern: '**/checkstyle-result.xml. ', unHealthy: '40']) 
 
 // Shell Pre-build step
  		
@@ -48,7 +61,8 @@ else
 fi
 '''
 
-// Docker Image build step
+
+// Docker Image build and K8s deploy step
 sh """ 
 #!/bin/bash
 pwd
@@ -66,18 +80,18 @@ docker tag spring-boot-websocket-chat-demo praveenkumarnagarajan/spring-boot-web
 cat ~/pass.txt | docker login --username praveenkumarnagarajan --password-stdin
 
 docker push praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT 
+docker pull praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT
+
+docker image ls
+kubectl run kubernetes-springboot --image=praveenkumarnagarajan/spring-boot-websocket-chat-demo:0.0.1-SNAPSHOT --port=8080
+kubectl expose deployment/kubernetes-springboot --type="NodePort" --port 8080
+
+kubectl get nodes
+kubectl get services
+kubectl describe services/kubernetes-springboot
  """
-  cleanWs()
-		// Checkstyle report
-		step([$class: 'CheckStylePublisher', canComputeNew: false, defaultEncoding: '', healthy: '90', pattern: '**/checkstyle-result.xml. ', unHealthy: '40']) 
+  
 	}
-}
-   stage("Quality Gate"){
-    timeout(time: 1, unit: 'HOURS') { // Just in case something goes wrong, pipeline will be killed after a timeout
-    def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
-    if (qg.status != 'OK') {
-        error "Pipeline aborted due to quality gate failure: ${qg.status}"
-    }
-  }
- }  
+cleanWs()
+ }
 }
