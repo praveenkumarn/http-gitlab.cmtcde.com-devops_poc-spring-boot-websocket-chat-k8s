@@ -92,6 +92,6 @@ kubectl describe services/kubernetes-springboot
  """
   
 	}
- }
 cleanWs()
+ }
 }
